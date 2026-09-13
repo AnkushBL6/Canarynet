@@ -16,10 +16,10 @@ jobs:
       matrix:
         python: ['3.11', '3.12', '3.13']
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
         with:
           python-version: ${{ matrix.python }}
       - name: Install package and independent SDK fixture dependency
@@ -50,5 +50,58 @@ jobs:
           assert report['surfaceChanges'] == []
           print('Same-schema behavioral regression verified against real subprocesses.')
           PY
-      - name: Verify composite action refuses implicit execution
-        run: python -c "from pathlib import Path; assert 'allow-exec' in Path('action.yml').read_text()"
+      - name: Exercise action without execution acknowledgement
+        id: blocked_action
+        continue-on-error: true
+        uses: ./
+        with:
+          config: ci-demo/canarynet.json
+          output: .canarynet/action-blocked
+      - name: Verify action refused execution and wrote no report
+        env:
+          BLOCKED_OUTCOME: ${{ steps.blocked_action.outcome }}
+        run: |
+          test "$BLOCKED_OUTCOME" = failure
+          test ! -e .canarynet/action-blocked
+      - name: Exercise action against intentionally broken candidate
+        id: breaking_action
+        continue-on-error: true
+        uses: ./
+        with:
+          config: ci-demo/canarynet.json
+          output: .canarynet/action-breaking
+          allow-exec: 'true'
+      - name: Verify action detected regressions and prepare compatible candidate
+        env:
+          BREAKING_OUTCOME: ${{ steps.breaking_action.outcome }}
+        run: |
+          test "$BREAKING_OUTCOME" = failure
+          python - <<'PYCODE'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('.canarynet/action-breaking/report.json').read_text())
+          assert report['exitCode'] == 1
+          assert report['counts']['regression'] == 2
+          path = Path('ci-demo/canarynet.json')
+          config = json.loads(path.read_text())
+          config['candidate']['command'][-1] = 'compatible'
+          config['candidate']['revision'] = 'synthetic-compatible'
+          path.write_text(json.dumps(config))
+          PYCODE
+      - name: Exercise action against compatible candidate
+        uses: ./
+        with:
+          config: ci-demo/canarynet.json
+          output: .canarynet/action-compatible
+          allow-exec: 'true'
+      - name: Verify action compatible report
+        run: |
+          python - <<'PYCODE'
+          import json
+          from pathlib import Path
+          report = json.loads(Path('.canarynet/action-compatible/report.json').read_text())
+          assert report['exitCode'] == 0
+          assert report['counts']['compatible'] == 4
+          assert report['surfaceChanges'] == []
+          print('Composite action verified: refuses implicit execution, catches regressions, accepts compatible cases.')
+          PYCODE
