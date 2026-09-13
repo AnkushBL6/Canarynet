@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "consumer": "synthetic-cart",
+  "cases": [
+    {"id": "small-total", "tool": "add", "arguments": {"a": 2, "b": 3}, "expect": {"isError": false, "equals": {"/structuredContent/sum": 5}}},
+    {"id": "zero-total", "tool": "add", "arguments": {"a": 0, "b": 0}, "expect": {"isError": false, "equals": {"/structuredContent/sum": 0}}}
+  ]
+}

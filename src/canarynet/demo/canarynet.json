@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "baseline": {"command": ["{python}", "server.py", "baseline"], "revision": "synthetic-baseline"},
+  "candidate": {"command": ["{python}", "server.py", "breaking"], "revision": "synthetic-breaking"},
+  "contracts": ["contracts/*.json"],
+  "allowTools": ["add", "lookup"],
+  "timeoutSeconds": 5,
+  "repetitions": 2
+}
