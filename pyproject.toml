@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canarynet"
+version = "0.1.0a1"
+description = "Local-first, consumer-driven compatibility checks for MCP tools"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["jsonschema>=4.26,<5", "referencing>=0.37,<1"]
+
+[project.scripts]
+canarynet = "canarynet.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+canarynet = ["demo/*.json", "demo/contracts/*.json", "demo/*.py"]

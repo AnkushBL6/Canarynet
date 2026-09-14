@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "consumer": "synthetic-inventory",
+  "cases": [
+    {"id": "known-sku", "tool": "lookup", "arguments": {"sku": "DEMO-1"}, "expect": {"isError": false, "equals": {"/structuredContent/quantity": 7}, "resultSchema": {"type": "object", "required": ["structuredContent"], "properties": {"structuredContent": {"type": "object", "required": ["quantity"], "properties": {"quantity": {"type": "integer", "minimum": 0}}}}}}},
+    {"id": "unknown-sku", "tool": "lookup", "arguments": {"sku": "UNKNOWN"}, "expect": {"isError": true, "equals": {"/content/0/text": "Synthetic record not found"}}}
+  ]
+}
